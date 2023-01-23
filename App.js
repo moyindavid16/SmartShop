@@ -1,20 +1,20 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import {NavigationContainer} from "@react-navigation/native";
+import {createContext, useContext, useState} from "react";
+import {SafeAreaView} from "react-native";
+import AuthStack from "./stacks/AuthStack";
+import MainStack from "./stacks/MainStack";
+
+import {AuthContext, AuthContextProvider} from "./utils/AuthContext";
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <AuthContextProvider>
+      <RootNavigator />
+    </AuthContextProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const RootNavigator = () => {
+  const {user} = useContext(AuthContext);
+  return <NavigationContainer>{user ? <MainStack /> : <AuthStack />}</NavigationContainer>;
+};
