@@ -55,7 +55,7 @@ export default function Profile() {
           <Text style={{width: "78%"}}>About Us</Text>
           <FontAwesome5 name={"chevron-right"} size={15} style={{color: "lightgrey"}} />
         </Pressable>
-        <Pressable style={styles.menuItem} onPress={()=>setUser(null)}>
+        <Pressable style={({pressed}) => [styles.menuItem, {backgroundColor: pressed ? "rgba(52,52,52,0.05)" : "white"}]} onPress={()=>setUser(null)}>
           <FontAwesome5 name={"sign-out-alt"} size={30} style={{color: "red"}} />
           <Text style={{width: "82%", color: "red"}}>Log out</Text>
         </Pressable>

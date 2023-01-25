@@ -62,12 +62,13 @@ const CatalogueItem = ({product}) => {
   const {cartItems, setCartItems} = useContext(CartContext);
 
   const handleAddToCart = product => {
-    setCartItems([...cartItems, {...product, quantity: quantity}]);
+    const newCart = cartItems.filter(item => item.name != product.name);
+    newCart.push({...product, quantity: quantity});
+    setCartItems(newCart);
     console.log(cartItems);
   };
 
   const [quantity, setQuantity] = useState(1);
-  
 
   return (
     <View style={styles.catalogueItem}>
@@ -81,16 +82,36 @@ const CatalogueItem = ({product}) => {
 
       <View style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "115%"}}>
         <View style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "57%"}}>
-          <Pressable style={({pressed}) => [styles.quantityButton, {backgroundColor: !pressed? "#bbbbbb": "orange"}]} onPress={() =>{let c = Math.max(quantity-1,1); setQuantity(c)}}>
+          <Pressable
+            style={({pressed}) => [styles.quantityButton, {backgroundColor: !pressed ? "#bbbbbb" : "orange"}]}
+            onPress={() => {
+              let c = Math.max(quantity - 1, 1);
+              setQuantity(c);
+            }}
+          >
             <Text style={{color: "white", fontWeight: "bold", fontSize: 18}}>-</Text>
           </Pressable>
-          <TextInput style={styles.quantityInput} value={quantity.toString()} textAlign="center" keyboardType="numeric" onChangeText={(q)=>{setQuantity(q)}} />
-          <Pressable style={({pressed}) => [styles.quantityButton, {backgroundColor: !pressed? "#bbbbbb": "orange"}]} onPress={() => setQuantity(quantity+1)}>
+          <TextInput
+            style={styles.quantityInput}
+            value={quantity.toString()}
+            textAlign="center"
+            keyboardType="numeric"
+            onChangeText={q => {
+              setQuantity(q);
+            }}
+          />
+          <Pressable
+            style={({pressed}) => [styles.quantityButton, {backgroundColor: !pressed ? "#bbbbbb" : "orange"}]}
+            onPress={() => setQuantity(quantity + 1)}
+          >
             <Text style={{color: "white", fontWeight: "bold", fontSize: 16}}>+</Text>
           </Pressable>
         </View>
 
-        <Pressable style={({pressed}) => [styles.addToCart, {backgroundColor: pressed? "#bbbbbb": "orange"}]} onPress={() => handleAddToCart(product)}>
+        <Pressable
+          style={({pressed}) => [styles.addToCart, {backgroundColor: pressed ? "#bbbbbb" : "orange"}]}
+          onPress={() => handleAddToCart(product)}
+        >
           <Text style={{color: "white", fontWeight: "bold", fontSize: 10}}>Add to Cart</Text>
         </Pressable>
       </View>
@@ -164,6 +185,6 @@ const styles = StyleSheet.create({
     backgroundColor: "orange",
     borderRadius: 5,
     padding: 4,
-    height: 23
+    height: 23,
   },
 });

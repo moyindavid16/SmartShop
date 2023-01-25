@@ -4,6 +4,7 @@ import {useContext, useState, useEffect} from "react";
 import {Dimensions, FlatList, Image, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View} from "react-native";
 import {CartContext} from "../utils/CartContext";
 import {formatCurrency, getSupportedCurrencies} from "react-native-format-currency";
+import { useNavigation } from "@react-navigation/native";
 
 export default function Cart() {
   const {cartItems} = useContext(CartContext);
@@ -11,11 +12,13 @@ export default function Cart() {
   const headerHeight = useHeaderHeight();
   const tabHeight = useBottomTabBarHeight();
 
+  const productSortComparator = (p1, p2) => (p1.name < p2.name) ? 1 : -1
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <View style={{flex: 1}}>
         <FlatList
-          data={cartItems}
+          data={cartItems.sort(productSortComparator)}
           renderItem={({item}) => <ListItem item={item} />}
           contentContainerStyle={{backgroundColor: "#f7f8fa"}}
         />
@@ -54,7 +57,7 @@ const ListItem = ({item}) => {
     <View style={styles.container}>
       <View style={{flexDirection: "row"}}>
         <Image source={{uri: item.imageUrl}} style={{height: 100, width: 100}} />
-        <View style={{paddingLeft: 10, justifyContent: "space-evenly"}}>
+        <View style={{paddingLeft: 10, justifyContent: "space-evenly", width: "63%"}}>
           <Text style={{flexWrap: "wrap", fontSize: 17}}>
             {quantity}x {item.name}
           </Text>
@@ -141,7 +144,8 @@ const styles = StyleSheet.create({
 });
 
 const ListFooter = () => {
-  const {cartItems, setCartItems} = useContext(CartContext);
+  const navigation = useNavigation()
+  const {cartItems, setCartItems, setCheckoutTotal} = useContext(CartContext);
   var subtotal = 0, tax=0, delivery = 500
   cartItems.forEach(item => {
     var amount = parseInt(item.price.slice(1).replaceAll(",", "") * item.quantity);
@@ -153,12 +157,16 @@ const ListFooter = () => {
       amount: num,
       code: "USD",
     });
+    
     return "₦" + valueFormattedWithoutSymbol
   }
   const formattedSubtotal = changeToCurrency(subtotal)
   tax=subtotal* 75 / 1000
   var formattedTax= changeToCurrency(tax), formattedDelivery = changeToCurrency(delivery)
   var total = subtotal + tax + delivery, formattedTotal = changeToCurrency(total)
+  if(formattedTotal){
+    setCheckoutTotal(formattedTotal)
+  }
 
   return (
     <View style={{backgroundColor: "white"}}>
@@ -183,7 +191,7 @@ const ListFooter = () => {
         <Text style={footerstyles.orderText}>{formattedTotal}</Text>
       </View>
 
-      <Pressable style={footerstyles.payButton}>
+      <Pressable style={({pressed}) => [footerstyles.payButton, {backgroundColor: pressed ? "#bbbbbb" : "orange"}]} onPress={()=>navigation.navigate("Checkout")}>
         <Text style={{color: "white"}}>Pay</Text>
       </Pressable>
     </View>

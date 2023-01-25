@@ -1,46 +1,108 @@
-import { useNavigation } from "@react-navigation/native";
-import { useContext, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {useNavigation} from "@react-navigation/native";
+import {useContext, useRef, useState} from "react";
+import {Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View} from "react-native";
 import PhoneInput from "react-native-phone-number-input";
-import { AuthContext } from "../utils/AuthContext";
-import { auth } from "../config/firebase";
-
-auth.languageCode = "it";
+import {AuthContext} from "../utils/AuthContext";
+import firebase from "firebase/compat/app";
+import {FirebaseRecaptchaVerifierModal} from "expo-firebase-recaptcha";
+import {firebaseConfig} from "../config/firebase";
 
 export default function SignIn() {
   const navigation = useNavigation();
-  const [phoneNumber, setPhoneNumber] = useState()
-  const {setUser} = useContext(AuthContext)
+  const {setUser} = useContext(AuthContext);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [code, setCode] = useState(1);
+  const [verificationID, setVerificationID] = useState("");
+  const recaptchaVerifier = useRef(null);
+  const phoneRef = useRef(null);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const verificationIDRef = useRef()
+  const codeRef = useRef()
+  const phoneNumberText = useRef("");
 
+  const sendVerification = () => {
+    var formattedphoneNumber = "";
+    for (let i = 0; i < 14; i++) {
+      formattedphoneNumber += phoneNumberText.current[i];
+      if (i == 3) formattedphoneNumber += " ";
+      if (i == 7) formattedphoneNumber += "-";
+      if (i == 10) formattedphoneNumber += "-";
+    }
+
+    const phoneProvider = new firebase.auth.PhoneAuthProvider();
+    phoneProvider
+      .verifyPhoneNumber(formattedphoneNumber, recaptchaVerifier.current)
+      .then(setVerificationID)
+      .catch(err => console.log(err.message));
+      setPhoneNumber("");
+  };
+  const confirmCode = () => {
+    const credential = firebase.auth.PhoneAuthProvider.credential(verificationIDRef.current, codeRef.current);
+    firebase
+      .auth()
+      .signInWithCredential(credential)
+      .then(() => {
+        setCode("");
+        console.log("Successful");
+        setUser(phoneNumberText.current)
+      })
+      .catch(error => {
+        Alert.alert(error.message);
+        console.log(error.message)
+      });
+  };
   const handleLogin = () => {
-    setUser("moyin")
-  }
+    setUser("moyin");
+  };
 
+  const [numberInputDisplay, setNumberInputDisplay] = useState(
+    <>
+      <PhoneInput
+        ref={phoneRef}
+        placeholder="Mobile Number"
+        containerStyle={styles.input}
+        textContainerStyle={{backgroundColor: ""}}
+        flagButtonStyle={{marginHorizontal: -10}}
+        defaultCode="NG"
+        value={phoneNumber}
+        onChangeFormattedText={text => {
+          setPhoneNumber(text);
+          phoneNumberText.current = text.toString();
+        }}
+      />
+      <Text>{phoneNumber}</Text>
+      <Pressable style={({pressed}) => [styles.loginButton, {backgroundColor: pressed ? "#bbbbbb" : "orange"}]} onPress={sendVerification}>
+        <Text style={styles.loginButtonText}>Send Verification Code</Text>
+      </Pressable>
+    </>,
+  );
+  const [codeInputDisplay, setCodeInputDisplay] = useState(
+    <>
+      <TextInput
+        placeholder="Verification Code"
+        style={styles.input}
+        value={code}
+        onChangeText={text => {setCode(text); codeRef.current = text}}
+      />
+      <Pressable style={({pressed}) => [styles.loginButton, {backgroundColor: pressed ? "#bbbbbb" : "orange"}]} onPress={confirmCode}>
+        <Text style={styles.loginButtonText}>Confirm Verification Code</Text>
+      </Pressable>
+    </>,
+  );
+    verificationIDRef.current=verificationID
+  
   return (
     <ScrollView style={{flex: 1, height: "100%"}}>
       <View style={styles.container}>
-        
+        <FirebaseRecaptchaVerifierModal ref={recaptchaVerifier} firebaseConfig={firebaseConfig} />
+
         <View style={styles.imageContainer}>
           <Image source={require("../assets/SignInImage1.jpg")} style={styles.image} />
         </View>
         <View style={styles.signInContainer}>
           <Text style={styles.titleText}>Welcome Back</Text>
           <Text style={{color: "#bbbbbb"}}>Login to your account</Text>
-          <View style={styles.inputContainer}>
-            <PhoneInput
-              placeholder="Mobile Number"
-              containerStyle={styles.input}
-              textContainerStyle={{backgroundColor: ""}}
-              flagButtonStyle={{marginHorizontal: -10}}
-              defaultCode="NG"
-              value={phoneNumber}
-              onChangeText={(num)=>setPhoneNumber(num)}
-            />
-            <TextInput placeholder="Passcode" style={styles.input} />
-          </View>
-          <Pressable style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Login</Text>
-          </Pressable>
+          {verificationID ? codeInputDisplay : numberInputDisplay}
           <Pressable>
             <Text style={{color: "grey"}}>Forgot your passcode?</Text>
           </Pressable>
@@ -91,7 +153,7 @@ const styles = StyleSheet.create({
   },
   input: {
     width: "80%",
-    height: "45%",
+    height: "12%",
     backgroundColor: "#f1f1f3",
     color: "black",
     borderRadius: 10,
